@@ -181,7 +181,7 @@ char read_keypad (void)
 		return 'D';
 	}
 
-	return 0x01;  // /if nothing is pressed
+	return 0x11;  // /if nothing is pressed
 
 }
 
@@ -218,7 +218,10 @@ int main(void)
   MX_GPIO_Init();
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
-  char msg[64]= {0};
+  char key = 0x11;
+  char message[4] = "0000";
+  int count=0;
+  int releaseflag=1;
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -228,15 +231,69 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-	  char key = read_keypad();
-	  sprintf(msg, "Key Pressed: %c \r\n",key);
-	  HAL_UART_Transmit(&huart2, (uint8_t*) msg, strlen(msg), HAL_MAX_DELAY);
-	  /*Reset variables */
-	  memset(msg, 0 , 64);
-//	  	if (key!=0x01)
-//	  		  {
-//
-//	  		  }
+	  key = read_keypad();
+	  if (count<4 & key!='*' & key!='\021' & releaseflag==1){
+		  message[count]=key;
+		  count+=1;
+		  releaseflag=0;
+	  }
+	  else if (key=='*'){
+		  message[0]='0';
+		  message[1]='0';
+		  message[2]='0';
+		  message[3]='0';
+		  count=0;
+	  }
+	  else if (count==4){
+		  if(message[0]=='2' & message[1]=='B' & message[2]=='0' & message[3]=='9'){
+			  //Send message to servo to open door
+			  HAL_GPIO_WritePin (GPIOB, GPIO_PIN_7, GPIO_PIN_SET);
+			  HAL_Delay(1000);
+			  message[0]='0';
+			  message[1]='0';
+			  message[2]='0';
+			  message[3]='0';
+			  count=0;
+			  HAL_GPIO_WritePin (GPIOB, GPIO_PIN_7, GPIO_PIN_RESET);
+		  }
+		  else if(message[0]=='D' & message[1]=='1' & message[2]=='A' & message[3]=='7'){
+			  HAL_GPIO_WritePin (GPIOB, GPIO_PIN_6, GPIO_PIN_SET);
+			  HAL_Delay(1000);
+			  	  message[0]='0';
+				  message[1]='0';
+				  message[2]='0';
+				  message[3]='0';
+				  count=0;
+				  HAL_GPIO_WritePin (GPIOB, GPIO_PIN_6, GPIO_PIN_RESET);
+		  }
+		  else if(message[0]=='3' & message[1]=='6' & message[2]=='5' & message[3]=='C'){
+			  HAL_GPIO_WritePin (GPIOB, GPIO_PIN_1, GPIO_PIN_SET);
+			  HAL_Delay(1000);
+			  message[0]='0';
+			  message[1]='0';
+			  message[2]='0';
+			  message[3]='0';
+			  count=0;
+			  HAL_GPIO_WritePin (GPIOB, GPIO_PIN_1, GPIO_PIN_RESET);
+		  }
+		  else{
+			  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_8, GPIO_PIN_SET);
+			  HAL_Delay(1000);
+			  message[0]='0';
+			  message[1]='0';
+			  message[2]='0';
+			  message[3]='0';
+			  count=0;
+			  HAL_GPIO_WritePin (GPIOA, GPIO_PIN_8, GPIO_PIN_RESET);
+		  }
+	  }
+	  else if (key=='\021'){
+		  releaseflag=1;
+		  HAL_Delay(100);
+	  }else{
+		  printf("Do Nothing");
+	  }
+
   }
   /* USER CODE END 3 */
 }
@@ -328,7 +385,11 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7
+                          |GPIO_PIN_8, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_1|GPIO_PIN_6|GPIO_PIN_7, GPIO_PIN_RESET);
 
   /*Configure GPIO pins : PA0 PA1 PA2 PA3 */
   GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3;
@@ -336,12 +397,21 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PA4 PA5 PA6 PA7 */
-  GPIO_InitStruct.Pin = GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7;
+  /*Configure GPIO pins : PA4 PA5 PA6 PA7
+                           PA8 */
+  GPIO_InitStruct.Pin = GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7
+                          |GPIO_PIN_8;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : PB1 PB6 PB7 */
+  GPIO_InitStruct.Pin = GPIO_PIN_1|GPIO_PIN_6|GPIO_PIN_7;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
 /* USER CODE BEGIN MX_GPIO_Init_2 */
 /* USER CODE END MX_GPIO_Init_2 */
