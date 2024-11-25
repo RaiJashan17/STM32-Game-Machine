@@ -1,0 +1,2 @@
+../Core/Src/ads1115.c:60:19:ADS1115_Init	16	static
+../Core/Src/ads1115.c:106:19:ADS1115_readSingleEnded	40	static
